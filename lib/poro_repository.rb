@@ -65,6 +65,12 @@ class PoroRepository
     id
   end
 
+  def load_all type
+    all_ids_for_type(type).collect do |id|
+      load_record type, id
+    end
+  end
+
   private
 
   def open_for_write path, &block
@@ -160,6 +166,13 @@ class PoroRepository
     @instantiated_records.values.collect do |h|
       h.values.compact.collect(&:actual)
     end.flatten.compact
+  end
+
+  def all_ids_for_type type
+    glob = record_path type, '*'
+    Dir[glob].collect do |path|
+      path.split('/').last # id
+    end
   end
 
 end

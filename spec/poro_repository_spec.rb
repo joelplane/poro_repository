@@ -164,4 +164,31 @@ describe PoroRepository do
 
   end
 
+  describe "#load_all" do
+
+    let(:object1) do
+      TestObject.new.tap do |o|
+        o.type = 'RecordType'
+        o.some_field = 42
+      end
+    end
+
+    let(:object2) do
+      TestObject.new.tap do |o|
+        o.type = 'RecordType'
+        o.some_field = 43
+      end
+    end
+
+    specify do
+      object_id1 = subject.save_record object1
+      object_id2 = subject.save_record object2
+      all_records = subject.load_all('RecordType').sort_by(&:some_field)
+      all_records.collect(&:some_field).should == [42, 43]
+      all_records.collect do |r|
+        subject.send(:id_from_record, r)
+      end.should == [object_id1, object_id2]
+    end
+  end
+
 end

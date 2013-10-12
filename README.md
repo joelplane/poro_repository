@@ -62,12 +62,18 @@ loaded_contact.company == loaded_company #=> true
 loaded_contact.company.equal?(loaded_company) #=> true ; same object
 ```
 
-Caveats
+Loading all records (it's all or nothing at the moment - no filtering)
+
+```ruby
+repo = PoroRepository.new("/repository/path")
+repo.load_all('Contact') #=> Array<Contact>
+```
+
+Limitations
 -------
 
 * No consideration has been given to concurrency. If you need concurrency, you
-  should probably use something else.
-* At least at this stage, it is only really suitable for storing hundreds of
-  objects, not thousands or millions.
-* It's still very incomplete and is missing most features required for it to
-  be generally useful.
+  could implement a mutex around repo access in your app, but you should
+  probably just use something else.
+* There is currently no way to efficiently search for records - you must load
+  up all records of a particular type, and filter them in the application.

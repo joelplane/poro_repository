@@ -17,7 +17,7 @@ class PoroRepository::WeakHash < Hash
 
   def [] key
     ref = super(key)
-    self.delete(key) if !ref.weakref_alive?
+    self.delete(key) if ref && !ref.weakref_alive?
     ref
   end
 

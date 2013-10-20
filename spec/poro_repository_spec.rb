@@ -4,7 +4,7 @@ require 'ostruct'
 describe PoroRepository do
 
   subject do
-    PoroRepository.new("/tmp/test-avial-invoicing-repository").tap do |repo|
+    PoroRepository.new("/tmp/test-poro-repository").tap do |repo|
       # disable storing of records in memory, so we know we're not cheating
       repo.remember = false
     end
@@ -64,7 +64,7 @@ describe PoroRepository do
   describe "boundaries" do
 
     subject do
-      PoroRepository.new("/tmp/test-avial-invoicing-repository").tap do |repo|
+      PoroRepository.new("/tmp/test-poro-repository").tap do |repo|
         repo.boundary :Invoice, :@contact
         repo.remember = false
       end
@@ -123,7 +123,7 @@ describe PoroRepository do
   describe "object lifecycle" do
 
     subject do
-      PoroRepository.new("/tmp/test-avial-invoicing-repository")
+      PoroRepository.new("/tmp/test-poro-repository")
     end
 
     let(:invoice) do
@@ -189,6 +189,40 @@ describe PoroRepository do
         subject.send(:id_from_record, r)
       end.should == [object_id1, object_id2]
     end
+  end
+
+  describe "#delete_record" do
+
+    subject do
+      PoroRepository.new("/tmp/test-poro-repository").tap do |repo|
+        repo.boundary :Invoice, :@contact
+      end
+    end
+
+    let(:contact) do
+      TestObject.new.tap do |o|
+        o.id = '234'
+        o.type = 'Contact'
+        o.name = 'John Smith'
+      end
+    end
+
+    let(:invoice) do
+      TestObject.new.tap do |o|
+        o.id = '345'
+        o.type = 'Invoice'
+        o.contact = contact
+      end
+    end
+
+    it "deletes the record, and not beyond boundary" do
+      record_id = subject.save_record invoice
+      subject.load_record('Invoice', record_id).should == invoice
+      subject.delete_record(invoice)
+      subject.load_record('Invoice', record_id).should be_nil
+      subject.load_all('Contact').first.name.should == 'John Smith'
+    end
+
   end
 
 end

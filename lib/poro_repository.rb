@@ -65,6 +65,13 @@ class PoroRepository
     id
   end
 
+  def delete_record record
+    id = id_from_record(record)
+    path = record_path(type_from_record(record), id)
+    FileUtils.rm path
+    forget_record record if @remember
+  end
+
   def load_all type
     all_ids_for_type(type).collect do |id|
       load_record type, id
@@ -153,6 +160,13 @@ class PoroRepository
     type = type_from_record(record)
     @instantiated_records[type] ||= WeakHash.new
     @instantiated_records[type][id_from_record(record)] = record
+  end
+
+  def forget_record record
+    type = type_from_record(record)
+    if @instantiated_records[type].is_a?(WeakHash)
+      @instantiated_records[type].delete(id_from_record(record))
+    end
   end
 
   def previous_instantiated type, id

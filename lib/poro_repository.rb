@@ -34,18 +34,15 @@ class PoroRepository
     end
   end
 
-  def load_record type, id
+  def load_record type, id, options={}
+    should_remember_record = options.has_key?(:remember) ? options[:remember] : @remember
+    should_load_boundary_records = options.has_key?(:load_boundary_records)  ? options[:load_boundary_records] : true
     record = previous_instantiated type, id
     return record unless record.nil?
     data = read_if_exists(record_path(type, id))
     data && deserialise(data).tap do |record|
-      record.instance_variables.each do |inst_var|
-        if (token = record.instance_variable_get(inst_var)).is_a? BoundaryToken
-          object = load_record token.original_type, token.original_id
-          record.instance_variable_set inst_var, object
-        end
-      end
-      remember_record record if @remember
+      load_boundary_records record, options if should_load_boundary_records
+      remember_record record if should_remember_record
     end
   end
 
@@ -72,13 +69,31 @@ class PoroRepository
     forget_record record if @remember
   end
 
-  def load_all type
+  def load_all type, load_record_options={}
     all_ids_for_type(type).collect do |id|
-      load_record type, id
+      load_record type, id, load_record_options
+    end
+  end
+
+  # @param type [String]
+  # @param field [Symbol]
+  # @return [Array]
+  def pluck type, field
+    load_all(type, :remember => false, :load_boundary_records => false).collect do |record|
+      record.send(field)
     end
   end
 
   private
+
+  def load_boundary_records record, load_record_options
+    record.instance_variables.each do |inst_var|
+      if (token = record.instance_variable_get(inst_var)).is_a? BoundaryToken
+        object = load_record token.original_type, token.original_id, load_record_options
+        record.instance_variable_set inst_var, object
+      end
+    end
+  end
 
   def open_for_write path, &block
     FileUtils.mkdir_p File.dirname(path)

@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "poro_repository"
-  s.version     = "0.1.2"
+  s.version     = "0.2.0"
   s.authors     = ["Joel Plane"]
   s.email       = ["joel.plane@gmail.com"]
   s.homepage    = "https://github.com/joelplane/poro_repository"

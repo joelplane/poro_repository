@@ -225,4 +225,50 @@ describe PoroRepository do
 
   end
 
+  describe "#pluck" do
+
+    def new_repo_instance
+      PoroRepository.new("/tmp/test-poro-repository").tap do |repo|
+        repo.boundary :Invoice, :@contact
+      end
+    end
+
+    subject do
+      new_repo_instance
+    end
+
+    let(:contact) do
+      TestObject.new.tap do |o|
+        o.id = '234'
+        o.type = 'Contact'
+        o.name = 'John Smith'
+      end
+    end
+
+    let(:invoice) do
+      TestObject.new.tap do |o|
+        o.id = '345'
+        o.type = 'Invoice'
+        o.contact = contact
+      end
+    end
+
+    # note: will not work if the specified field is a boundary.
+    it "extracts just the specified field" do
+      record_id = subject.save_record invoice
+      # Using a new instance of repo so we can call #previous_instantiated()
+      # to confirm that the contact record wasn't loaded along with the invoice.
+      # We must use a new repo instance to do this, since the contact record
+      # is already in memory in the first repo instance since that instance was
+      # used to save the Contact in the first place.
+      repo = new_repo_instance
+      repo.pluck('Invoice', :id).should == ['345']
+      # it shouldn't instantiate boundary objects
+      repo.send(:previous_instantiated, 'Contact', '234').should be_nil
+      # it shouldn't remember the records it instantiated, since they will be
+      # imcomplete without having loaded boundary objects.
+      repo.send(:previous_instantiated, 'Invoice', '345').should be_nil
+    end
+  end
+
 end
